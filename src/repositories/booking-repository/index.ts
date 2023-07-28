@@ -1,4 +1,4 @@
-import { Hotel, Room } from '@prisma/client';
+import { Booking, Hotel, Room } from '@prisma/client';
 import { prisma } from '@/config';
 import { BookingParams } from '@/protocols';
 
@@ -16,29 +16,31 @@ async function getBookingByUserId(userId:number){
 }
 
 // listar a reserva
-/*   
-    {
+/*  {
     	"id": bookingId,
     	"Room": {
     			// dados do quarto
     		}
-    }
+    }*/
+async function getRoom(roomId: number) {
+    return prisma.room.findFirst({
+        where: { id: roomId },
+    })
+};
 
-async function findHotelId(hotelId: number) {
-    /* const rooms = prisma.room.findFirst({
-        where: {hotelId},
-    }); */
-    return prisma.hotel.findFirst({
-      where: { id: hotelId },
-      include: {
-        Rooms: true
-      },
-    });
+async function createBooking(roomId: number, userId: number):Promise <Booking> {
+    return prisma.booking.create({
+          data: {
+            roomId,
+            userId
+        }
+});
 }
 
 export default {
     getBookingByUserId,
-    
+    getRoom,
+    createBooking,
 };
   
 

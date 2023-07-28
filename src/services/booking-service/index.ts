@@ -1,10 +1,12 @@
 import { Booking } from '@prisma/client';
 import { notFoundError} from '@/errors';
-import hotelsRepository  from '@/repositories/hotels-repository';
 import bookingRepository from '@/repositories/booking-repository';
 import {paymentRequiredError} from '@/errors/payment-error';
 import { requestError } from '@/errors/request-error';
 import { BookingParams } from '@/protocols';
+import { forbiddenError } from '@/errors/forbidden-error';
+import ticketsRepository from '@/repositories/tickets-repository';
+import ticketService from '../tickets-service';
     
 
 async function getBooking(userId: number): Promise<BookingParams> {
@@ -12,28 +14,32 @@ async function getBooking(userId: number): Promise<BookingParams> {
     // Usuário não tem reserva: Deve retornar status code `404`
     if (!booking) throw notFoundError(); 
     return booking;
+} 
+    
+async function postBooking(userId: number, roomId: number) {
+//`roomId` não existente: Deve retornar status code `404`.
+    const room = await bookingRepository.getRoom(roomId);
+    if (!room) throw notFoundError();
+//`roomId` sem vaga: Deve retornar status code `403`.
+    if (room.booking.length === room.capacity) throw forbiddenError();
+// Fora da regra de negócio: Deve retornar status code `403`.
+// Regra de negócio: 
+// Apenas usuários com ingresso do tipo presencial, com hospedagem e pago podem fazer reservas.
+    const ticket = await ticketService.getTicketByUserId(userId);
+    const ticketType = await ticketsRepository.findTickeWithTypeById(ticket.id);
+    if(ticket.status !== "PAID" || ticketType.TicketType.isRemote !== false) throw forbiddenError();
+    const bookingId = await bookingRepository.createBooking(roomId, userId);
+//**Sucesso**: Deve retornar status code `200` com `bookingId` 
+    return bookingId;
 }
+
     
-async function getBookingId(userId: number, id: number) {
-        const ticket = await ticketService.getTicketByUserId(userId);
-        //- Não existe (inscrição, ticket ou hotel): `404 (not found)`
-        if (!ticket || !ticket.enrollmentId || !id) throw notFoundError(); //404
-        //- Ticket não foi pago, é remoto ou não inclui hotel: `402 (payment required)`
-        const ticket2 = await ticketsRepository.findTicketByEnrollmentId(ticket.enrollmentId);
-        if (ticket2.status === "RESERVED" || ticket2.TicketType.isRemote === true || ticket2.TicketType.includesHotel === false) throw paymentRequiredError(); //402
-        
-        const hotel = await hotelsRepository.findHotelId(id);
-        if (!hotel) throw notFoundError();
-        
-        return hotel;
-    }
-    
-    const hotelsService = {
-        getHotels,
-        getHotelId,
-      };
+const bookingService = {
+    getBooking,
+    postBooking,
+};
       
-      export default hotelsService;
+export default bookingService;
 
 
 
