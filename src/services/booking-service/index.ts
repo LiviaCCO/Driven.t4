@@ -8,7 +8,7 @@ import ticketsRepository from '@/repositories/tickets-repository';
 import ticketService from '../tickets-service';
     
 
-async function getBooking(userId: number): Promise<BookingParams> {
+async function getBooking(userId: number) {
     const booking = await bookingRepository.getBookingByUserId(userId);
     // Usuário não tem reserva: Deve retornar status code `404`
     if (!booking) throw notFoundError(); 
@@ -20,7 +20,7 @@ async function postBooking(userId: number, roomId: number) {
     const room = await bookingRepository.getRoom(roomId);
     if (!room) throw notFoundError();
 //`roomId` sem vaga: Deve retornar status code `403`.
-    if (room.booking.length === room.capacity) throw forbiddenError();
+    if (room.Booking.length === room.capacity) throw forbiddenError();
 // Fora da regra de negócio: Deve retornar status code `403`.
 // Regra de negócio: 
 // Apenas usuários com ingresso do tipo presencial, com hospedagem e pago podem fazer reservas.
@@ -40,7 +40,7 @@ async function putBooking(userId: number, roomId: number){
 // Fora da regra de negócio: Deve retornar status code `403`. 
 // A troca pode ser efetuada para usuários que possuem reservas.
     const booking = await bookingRepository.getBookingByUserId(userId);     
-    if (room.booking.length === room.capacity || !booking) throw forbiddenError();
+    if (room.Booking.length === room.capacity || !booking) throw forbiddenError();
 
     const bookingUpdate = await bookingRepository.updateBooking(booking.id, roomId);
     //**Sucesso**: Deve retornar status code `200` com `bookingId` 
