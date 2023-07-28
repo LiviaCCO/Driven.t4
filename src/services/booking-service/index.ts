@@ -1,7 +1,6 @@
 import { Booking } from '@prisma/client';
 import { notFoundError} from '@/errors';
 import bookingRepository from '@/repositories/booking-repository';
-import {paymentRequiredError} from '@/errors/payment-error';
 import { requestError } from '@/errors/request-error';
 import { BookingParams } from '@/protocols';
 import { forbiddenError } from '@/errors/forbidden-error';
@@ -28,15 +27,31 @@ async function postBooking(userId: number, roomId: number) {
     const ticket = await ticketService.getTicketByUserId(userId);
     const ticketType = await ticketsRepository.findTickeWithTypeById(ticket.id);
     if(ticket.status !== "PAID" || ticketType.TicketType.isRemote !== false) throw forbiddenError();
-    const bookingId = await bookingRepository.createBooking(roomId, userId);
+    const booking = await bookingRepository.createBooking(roomId, userId);
 //**Sucesso**: Deve retornar status code `200` com `bookingId` 
-    return bookingId;
+    return booking.id;
+}
+
+async function putBooking(userId: number, roomId: number){
+// `roomId` não existente: Deve retornar status code `404`.
+    const room = await bookingRepository.getRoom(roomId);
+    if (!room) throw notFoundError();
+// `roomId` sem vaga: Deve retornar status code `403`.   
+// Fora da regra de negócio: Deve retornar status code `403`. 
+// A troca pode ser efetuada para usuários que possuem reservas.
+    const booking = await bookingRepository.getBookingByUserId(userId);     
+    if (room.booking.length === room.capacity || !booking) throw forbiddenError();
+
+    const bookingUpdate = await bookingRepository.updateBooking(booking.id, roomId);
+    //**Sucesso**: Deve retornar status code `200` com `bookingId` 
+    return bookingUpdate.id;  
 }
 
     
 const bookingService = {
     getBooking,
     postBooking,
+    putBooking,
 };
       
 export default bookingService;

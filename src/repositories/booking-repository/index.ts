@@ -37,10 +37,22 @@ async function createBooking(roomId: number, userId: number):Promise <Booking> {
 });
 }
 
+async function updateBooking(bookingId:number, roomId: number):Promise <Booking> {
+    return prisma.booking.update({
+        where: {
+            id: bookingId,
+          },
+          data: {
+            roomId
+          },
+});
+}
+
 export default {
     getBookingByUserId,
     getRoom,
     createBooking,
+    updateBooking,
 };
   
 
