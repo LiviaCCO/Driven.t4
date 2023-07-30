@@ -13,7 +13,7 @@ async function getBooking(userId: number) {
     // Usuário não tem reserva: Deve retornar status code `404`
     if (!booking) throw notFoundError(); 
     return booking;
-} 
+}
     
 async function postBooking(userId: number, roomId: number) {
 //`roomId` não existente: Deve retornar status code `404`.
