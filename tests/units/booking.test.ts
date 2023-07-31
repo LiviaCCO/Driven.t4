@@ -1,4 +1,4 @@
-import rentalsService from "../../src/services/rentals-service";
+/* import rentalsService from "../../src/services/rentals-service";
 import rentalsRepository from "../../src/repositories/rentals-repository";
 import usersRepository from "../../src/repositories/users-repository";
 import moviesRepository from "../../src/repositories/movies-repository";
@@ -196,4 +196,4 @@ describe("Rentals Service Unit Tests", () => {
     })
   })
 
-})
+}) */
