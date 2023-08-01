@@ -32,9 +32,7 @@ async function postBooking(userId: number, roomId: number) {
 // Apenas usuários com ingresso do tipo presencial, com hospedagem e pago podem fazer reservas.
     const ticket = await ticketService.getTicketByUserId(userId);
     const ticketType = await ticketsRepository.findTickeWithTypeById(ticket.id);
-    if(ticket.status === "RESERVED" || 
-    ticketType.TicketType.isRemote === true || 
-    ticketType.TicketType.includesHotel ===  false) throw forbiddenError();
+    if(ticket.status === "RESERVED" || ticketType.TicketType.isRemote === true || ticketType.TicketType.includesHotel ===  false) throw forbiddenError();
     const booking = await bookingRepository.createBooking(roomId, userId);
 //**Sucesso**: Deve retornar status code `200` com `bookingId` 
     const bookingId = {bookingId: booking.id}

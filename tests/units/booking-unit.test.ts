@@ -1,31 +1,32 @@
 import { notFoundError } from "@/errors"; 
 import bookingRepository from "@/repositories/booking-repository";
 import bookingService from "@/services/booking-service";
-import { Room, Booking } from "@prisma/client";
+import { Room, Booking, Ticket, TicketType } from "@prisma/client";
 import ticketsRepository from "@/repositories/tickets-repository";
+import { forbiddenError } from "@/errors";
 
 describe("Booking Service Unit Tests", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-  })
+  });
 
   describe("get booking tests", () => {
     it("should return booking", async () => {
-    const mockBooking : Booking & { Room: Room[] }= {
+    const mockBooking : Booking & { Room: Room }= {
         id: 1,
         userId: 1,
         roomId: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
-        Room: [{
+        Room: {
           id: 1,
           name: "Driven Hotel",
           capacity: 2,
           hotelId: 1,
           createdAt: new Date(),
           updatedAt: new Date(),
-        }]
+        }
       } 
       const resMockBooking = {
         id: 1,
@@ -48,9 +49,9 @@ describe("Booking Service Unit Tests", () => {
     it("should return notFoundError when booking is not found", async () => {
       jest.spyOn(bookingRepository, "getBookingByUserId").mockResolvedValueOnce(null);
       const promise = bookingService.getBooking(1);
-      expect(promise).rejects.toEqual(notFoundError("No result for this search!"))
+      expect(promise).rejects.toEqual(notFoundError())
     });
-  })
+  });
 
   describe("create booking tests", () => {
     it("should throw an error when roomId does not exist", async () => {
@@ -60,21 +61,21 @@ describe("Booking Service Unit Tests", () => {
       const promise = bookingService.postBooking(userId, roomId);
       expect(promise).rejects.toEqual({
         name: "NotFoundError",
-        message: "User not found."
+        message: "No result for this search!"
       })
     });
 
     it("should throw an error when roomId has no vacancy", async () => {
       const userId = 1;
       const roomId = 1;
-      const room = {
+      const room : Room & { Booking: Booking[] } = {
         id: 1,
         name: "Driven Hotel",
         capacity: 0,
         hotelId: 1,
         createdAt: new Date(),
-        updateAt: new Date(),
-        Booking: [{}]
+        updatedAt: new Date(),
+        Booking: []
       }
       jest.spyOn(bookingRepository, "getRoom").mockResolvedValueOnce(room);
       const promise = bookingService.postBooking(userId, roomId);
@@ -87,14 +88,14 @@ describe("Booking Service Unit Tests", () => {
     it("should throw an error when roomId has no vacancy", async () => {
       const userId = 1;
       const roomId = 1;
-      const room = {
+      const room : Room & { Booking: Booking[] }= {
         id: 1,
         name: "Driven Hotel",
         capacity: 0,
         hotelId: 1,
         createdAt: new Date(),
-        updateAt: new Date(),
-        Booking: [{}]
+        updatedAt: new Date(),
+        Booking: []
       }
       jest.spyOn(bookingRepository, "getRoom").mockResolvedValueOnce(room);
       const promise = bookingService.postBooking(userId, roomId);
@@ -107,13 +108,21 @@ describe("Booking Service Unit Tests", () => {
     it("should throw an error when ticket is remote", async () => {
       const userId = 1;
       const roomId = 1;
-      const mockTicketType = {
+      const Room = {
         id: 1,
-        TicketTypeId: "Driven Hotel",
-        enrollmentId: 0,
+        name: "Driven Hotel",
+        capacity: 1,
+        hotelId: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      const mockTicketType : Ticket & { TicketType: TicketType } = {
+        id: 1,
+        ticketTypeId: 1,
+        enrollmentId: 1,
         status: "PAID",
         createdAt: new Date(),
-        updateAt: new Date(),
+        updatedAt: new Date(),
         TicketType: {
           id: 1,
           name: "Driven",
@@ -121,27 +130,24 @@ describe("Booking Service Unit Tests", () => {
           isRemote: true,
           includesHotel: true,
           createdAt: new Date(),
-          updateAt: new Date(),
+          updatedAt: new Date(),
         }
       }
       jest.spyOn(ticketsRepository, "findTickeWithTypeById").mockResolvedValueOnce(mockTicketType);
       const promise = bookingService.postBooking(userId, roomId);
-      expect(promise).rejects.toEqual({
-        name: "ForbiddenError",
-        message: "Forbidden Error"
-      })
+      expect(promise).rejects.toEqual(forbiddenError())
     });
 
     it("should throw an error when ticket is no PAID", async () => {
       const userId = 1;
       const roomId = 1;
-      const mockTicketType = {
+      const mockTicketType: Ticket & { TicketType: TicketType }  = {
         id: 1,
-        TicketTypeId: "Driven Hotel",
+        ticketTypeId: 1,
         enrollmentId: 0,
         status: "RESERVED",
         createdAt: new Date(),
-        updateAt: new Date(),
+        updatedAt: new Date(),
         TicketType: {
           id: 1,
           name: "Driven",
@@ -149,7 +155,7 @@ describe("Booking Service Unit Tests", () => {
           isRemote: false,
           includesHotel: true,
           createdAt: new Date(),
-          updateAt: new Date(),
+          updatedAt: new Date(),
         }
       }
       jest.spyOn(ticketsRepository, "findTickeWithTypeById").mockResolvedValueOnce(mockTicketType);
@@ -163,13 +169,13 @@ describe("Booking Service Unit Tests", () => {
     it("should throw an error when ticket is no hotel", async () => {
       const userId = 1;
       const roomId = 1;
-      const mockTicketType = {
+      const mockTicketType: Ticket & { TicketType: TicketType }  = {
         id: 1,
-        TicketTypeId: "Driven Hotel",
+        ticketTypeId: 1,
         enrollmentId: 0,
         status: "PAID",
         createdAt: new Date(),
-        updateAt: new Date(),
+        updatedAt: new Date(),
         TicketType: {
           id: 1,
           name: "Driven",
@@ -177,7 +183,7 @@ describe("Booking Service Unit Tests", () => {
           isRemote: false,
           includesHotel: false,
           createdAt: new Date(),
-          updateAt: new Date(),
+          updatedAt: new Date(),
         }
       }
       jest.spyOn(ticketsRepository, "findTickeWithTypeById").mockResolvedValueOnce(mockTicketType);
@@ -191,13 +197,13 @@ describe("Booking Service Unit Tests", () => {
     it("should bookingId when ok", async () => {
       const userId = 1;
       const roomId = 1;
-      const mockTicketType = {
+      const mockTicketType: Ticket & { TicketType: TicketType }  = {
         id: 1,
-        TicketTypeId: "Driven Hotel",
+        ticketTypeId: 1,
         enrollmentId: 0,
         status: "PAID",
         createdAt: new Date(),
-        updateAt: new Date(),
+        updatedAt: new Date(),
         TicketType: {
           id: 1,
           name: "Driven",
@@ -205,35 +211,15 @@ describe("Booking Service Unit Tests", () => {
           isRemote: false,
           includesHotel: true,
           createdAt: new Date(),
-          updateAt: new Date(),
+          updatedAt: new Date(),
         }
       }
       jest.spyOn(ticketsRepository, "findTickeWithTypeById").mockResolvedValueOnce(mockTicketType);
       const promise = bookingService.postBooking(userId, roomId);
       expect(promise).toEqual({bookingId: 1})
     });
-
-
-
-
-    it("should throw an error when user already have a rental", async () => {
-      const mockUser: User = { id: 1, ...buildUserInput(true) }
-      const userRental: Rental = buildRentalReturn(1, true);
-
-      jest.spyOn(usersRepository, "getById").mockResolvedValueOnce(mockUser);
-      jest.spyOn(rentalsRepository, "getRentalsByUserId").mockResolvedValue([userRental]);
-
-      const promise = rentalsService.createRental({
-        userId: userRental.id,
-        moviesId: [4, 5, 6, 7] // made up values
-      });
-      expect(promise).rejects.toEqual({
-        name: "PendentRentalError",
-        message: "The user already have a rental!"
-      })
-    })
-
-  })
+  
+  });
 
   describe("update booking tests", () => {
     it("should change roomId", async () => {
@@ -260,6 +246,6 @@ describe("Booking Service Unit Tests", () => {
 
 
     })
-  })
+  });
 
-})
+});
