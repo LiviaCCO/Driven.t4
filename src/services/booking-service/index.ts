@@ -10,10 +10,8 @@ import ticketService from '../tickets-service';
 
 async function getBooking(userId: number) {
     const booking = await bookingRepository.getBookingByUserId(userId);
-    console.log("booking", booking)
     // Usuário não tem reserva: Deve retornar status code `404`
-    if (!booking) throw notFoundError(); 
-    console.log(booking)
+    if (!booking) throw notFoundError();
     const bookingByUserId = {
         id: booking.id,
         Room: booking.Room
@@ -34,7 +32,9 @@ async function postBooking(userId: number, roomId: number) {
 // Apenas usuários com ingresso do tipo presencial, com hospedagem e pago podem fazer reservas.
     const ticket = await ticketService.getTicketByUserId(userId);
     const ticketType = await ticketsRepository.findTickeWithTypeById(ticket.id);
-    if(ticket.status === "RESERVED" || ticketType.TicketType.isRemote === true || ticketType.TicketType.includesHotel ===  false) throw forbiddenError();
+    if(ticket.status === "RESERVED" || 
+    ticketType.TicketType.isRemote === true || 
+    ticketType.TicketType.includesHotel ===  false) throw forbiddenError();
     const booking = await bookingRepository.createBooking(roomId, userId);
 //**Sucesso**: Deve retornar status code `200` com `bookingId` 
     const bookingId = {bookingId: booking.id}

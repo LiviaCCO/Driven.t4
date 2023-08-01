@@ -3,7 +3,6 @@ import { prisma } from '@/config';
 import { BookingParams } from '@/protocols';
 
 async function getBookingByUserId(userId:number){
-    console.log("entrou")
     const booking = await prisma.booking.findFirst({
         where: { userId },
         include: {
